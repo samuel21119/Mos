@@ -42,8 +42,14 @@ class ButtonCore {
             return Unmanaged.passUnretained(event)
         }
 
-        // 执行绑定的系统快捷键
-        ShortcutExecutor.shared.execute(named: binding.systemShortcutName)
+        // 执行绑定的快捷键 (支持系统快捷键和自定义快捷键)
+        if binding.isCustomShortcut, let customShortcut = binding.customShortcut {
+            // 执行自定义快捷键
+            ShortcutExecutor.shared.execute(customShortcut: customShortcut)
+        } else if !binding.systemShortcutName.isEmpty {
+            // 执行系统快捷键
+            ShortcutExecutor.shared.execute(named: binding.systemShortcutName)
+        }
 
         // 消费事件(不再传递给系统)
         return nil

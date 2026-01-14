@@ -6043,6 +6043,23 @@
         }
       }
     },
+    "button.record.custom" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Record Custom Shortcut..."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "录制自定义快捷键..."
+          }
+        }
+      }
+    },
     "button.app.settings.title" : {
       "extractionState" : "manual",
       "localizations" : {

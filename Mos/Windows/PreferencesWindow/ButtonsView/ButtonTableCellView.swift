@@ -23,6 +23,7 @@ class ButtonTableCellView: NSTableCellView, NSMenuDelegate {
 
     // MARK: - Callbacks
     private var onShortcutSelected: ((SystemShortcut.Shortcut?) -> Void)?
+    private var onCustomShortcutRequested: (() -> Void)?
     private var onDeleteRequested: (() -> Void)?
     private var onDefaultToggleChanged: ((Bool) -> Void)?
     private var onAppSettingsRequested: (() -> Void)?
@@ -36,12 +37,14 @@ class ButtonTableCellView: NSTableCellView, NSMenuDelegate {
     func configure(
         with binding: ButtonBinding,
         onShortcutSelected: @escaping (SystemShortcut.Shortcut?) -> Void,
+        onCustomShortcutRequested: @escaping () -> Void,
         onDeleteRequested: @escaping () -> Void,
         onDefaultToggleChanged: @escaping (Bool) -> Void,
         onAppSettingsRequested: @escaping () -> Void
     ) {
         // 保存回调
         self.onShortcutSelected = onShortcutSelected
+        self.onCustomShortcutRequested = onCustomShortcutRequested
         self.onDeleteRequested = onDeleteRequested
         self.onDefaultToggleChanged = onDefaultToggleChanged
         self.onAppSettingsRequested = onAppSettingsRequested
@@ -57,7 +60,7 @@ class ButtonTableCellView: NSTableCellView, NSMenuDelegate {
         setupKeyDisplayView(with: binding.triggerEvent)
 
         // 配置动作选择器
-        setupActionPopUpButton(currentShortcut: binding.systemShortcut)
+        setupActionPopUpButton(binding: binding)
         
         // 配置默认开关和应用设置按钮
         setupDefaultToggleAndAppSettings(binding: binding)
@@ -77,6 +80,7 @@ class ButtonTableCellView: NSTableCellView, NSMenuDelegate {
         configure(
             with: binding,
             onShortcutSelected: onShortcutSelected,
+            onCustomShortcutRequested: { },
             onDeleteRequested: onDeleteRequested,
             onDefaultToggleChanged: { _ in },
             onAppSettingsRequested: { }
@@ -179,7 +183,7 @@ class ButtonTableCellView: NSTableCellView, NSMenuDelegate {
     /// 1. 每次配置创建新的 NSMenu 实例，避免 cell 复用时共享状态
     /// 2. 默认禁用所有菜单项的 keyEquivalent，防止与 ButtonCore 触发的快捷键冲突
     /// 3. 通过 NSMenuDelegate 在菜单打开时临时启用 keyEquivalent（显示快捷键样式）
-    private func setupActionPopUpButton(currentShortcut: SystemShortcut.Shortcut?) {
+    private func setupActionPopUpButton(binding: ButtonBinding) {
         // 每次配置时创建新的 menu，避免 cell 复用时共享状态
         let menu = NSMenu()
         menu.delegate = self
@@ -199,7 +203,10 @@ class ButtonTableCellView: NSTableCellView, NSMenuDelegate {
         actionPopUpButton.menu = menu
 
         // 设置当前选择
-        if let shortcut = currentShortcut {
+        if binding.isCustomShortcut, let customShortcut = binding.customShortcut {
+            // 显示自定义快捷键
+            setCustomShortcutDisplay(customShortcut)
+        } else if let shortcut = binding.systemShortcut {
             selectShortcutInMenu(shortcut)
         } else {
             setPlaceholderToUnbound()
@@ -369,11 +376,30 @@ class ButtonTableCellView: NSTableCellView, NSMenuDelegate {
     private func setPlaceholderToUnbound() {
         setCustomTitle(NSLocalizedString("unbound", comment: ""), image: nil)
     }
+    
+    /// 设置占位符为自定义快捷键显示
+    private func setCustomShortcutDisplay(_ customShortcut: RecordedEvent) {
+        let displayName = customShortcut.displayComponents.joined(separator: " ")
+        // 为自定义快捷键添加图标 (macOS 11.0+)
+        var image: NSImage? = nil
+        if #available(macOS 11.0, *) {
+            image = NSImage(systemSymbolName: "keyboard", accessibilityDescription: nil)
+        }
+        setCustomTitle(displayName, image: image)
+    }
 
     // MARK: - Actions
 
     /// 快捷键选择回调
     @objc private func shortcutSelected(_ sender: NSMenuItem) {
+        // 检查是否选择了"录制自定义快捷键"
+        if let identifier = sender.representedObject as? String,
+           identifier == ShortcutManager.recordCustomShortcutIdentifier {
+            // 触发自定义快捷键录制
+            onCustomShortcutRequested?()
+            return
+        }
+        
         // representedObject 为 nil 时表示用户选择了"未绑定"
         let shortcut = sender.representedObject as? SystemShortcut.Shortcut
 

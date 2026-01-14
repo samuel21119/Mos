@@ -122,7 +122,7 @@ struct ButtonApplicationRule: Codable, Equatable {
 }
 
 // MARK: - ButtonBinding
-/// 按钮绑定 - 将录制的事件与系统快捷键关联
+/// 按钮绑定 - 将录制的事件与系统快捷键或自定义快捷键关联
 struct ButtonBinding: Codable, Equatable {
 
     // MARK: - 数据字段
@@ -133,8 +133,11 @@ struct ButtonBinding: Codable, Equatable {
     /// 录制的触发事件
     let triggerEvent: RecordedEvent
 
-    /// 绑定的系统快捷键名称
+    /// 绑定的系统快捷键名称 (与 customShortcut 二选一)
     let systemShortcutName: String
+    
+    /// 自定义快捷键 (与 systemShortcutName 二选一)
+    var customShortcut: RecordedEvent?
 
     /// 是否启用
     var isEnabled: Bool
@@ -157,13 +160,30 @@ struct ButtonBinding: Codable, Equatable {
     var systemShortcut: SystemShortcut.Shortcut? {
         return SystemShortcut.getShortcut(named: systemShortcutName)
     }
+    
+    /// 判断是否使用自定义快捷键
+    var isCustomShortcut: Bool {
+        return customShortcut != nil && systemShortcutName.isEmpty
+    }
+    
+    /// 获取绑定动作的显示名称
+    var actionDisplayName: String {
+        if let custom = customShortcut {
+            return custom.displayComponents.joined(separator: " ")
+        }
+        if let shortcut = systemShortcut {
+            return shortcut.localizedName
+        }
+        return NSLocalizedString("unbound", comment: "")
+    }
 
     // MARK: - 初始化
 
-    init(id: UUID = UUID(), triggerEvent: RecordedEvent, systemShortcutName: String, isEnabled: Bool = true, isDefaultEnabled: Bool = true, disabledApplications: [ButtonApplicationRule] = [], enabledApplications: [ButtonApplicationRule] = []) {
+    init(id: UUID = UUID(), triggerEvent: RecordedEvent, systemShortcutName: String, customShortcut: RecordedEvent? = nil, isEnabled: Bool = true, isDefaultEnabled: Bool = true, disabledApplications: [ButtonApplicationRule] = [], enabledApplications: [ButtonApplicationRule] = []) {
         self.id = id
         self.triggerEvent = triggerEvent
         self.systemShortcutName = systemShortcutName
+        self.customShortcut = customShortcut
         self.isEnabled = isEnabled
         self.createdAt = Date()
         self.isDefaultEnabled = isDefaultEnabled
@@ -174,7 +194,7 @@ struct ButtonBinding: Codable, Equatable {
     // MARK: - Codable (兼容旧数据)
     
     private enum CodingKeys: String, CodingKey {
-        case id, triggerEvent, systemShortcutName, isEnabled, createdAt, isDefaultEnabled, applicationRules, disabledApplications, enabledApplications
+        case id, triggerEvent, systemShortcutName, customShortcut, isEnabled, createdAt, isDefaultEnabled, applicationRules, disabledApplications, enabledApplications
     }
     
     init(from decoder: Decoder) throws {
@@ -182,6 +202,7 @@ struct ButtonBinding: Codable, Equatable {
         id = try container.decode(UUID.self, forKey: .id)
         triggerEvent = try container.decode(RecordedEvent.self, forKey: .triggerEvent)
         systemShortcutName = try container.decode(String.self, forKey: .systemShortcutName)
+        customShortcut = try container.decodeIfPresent(RecordedEvent.self, forKey: .customShortcut)
         isEnabled = try container.decode(Bool.self, forKey: .isEnabled)
         createdAt = try container.decode(Date.self, forKey: .createdAt)
         // 兼容旧数据
@@ -204,6 +225,7 @@ struct ButtonBinding: Codable, Equatable {
         try container.encode(id, forKey: .id)
         try container.encode(triggerEvent, forKey: .triggerEvent)
         try container.encode(systemShortcutName, forKey: .systemShortcutName)
+        try container.encodeIfPresent(customShortcut, forKey: .customShortcut)
         try container.encode(isEnabled, forKey: .isEnabled)
         try container.encode(createdAt, forKey: .createdAt)
         try container.encode(isDefaultEnabled, forKey: .isDefaultEnabled)

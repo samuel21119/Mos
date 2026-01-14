@@ -70,4 +70,19 @@ class ShortcutExecutor {
 
         execute(shortcut)
     }
+    
+    // MARK: - 执行自定义快捷键
+    
+    /// 执行自定义快捷键 (从 RecordedEvent)
+    /// - Parameter recordedEvent: 录制的自定义快捷键事件
+    func execute(customShortcut recordedEvent: RecordedEvent) {
+        // 只支持键盘事件类型的自定义快捷键
+        guard recordedEvent.type == .keyboard else {
+            NSLog("ShortcutExecutor: Custom shortcut only supports keyboard events")
+            return
+        }
+        
+        // NSLog("ShortcutExecutor: Executing custom shortcut (code: \(recordedEvent.code), modifiers: \(recordedEvent.modifiers))")
+        execute(code: CGKeyCode(recordedEvent.code), flags: UInt64(recordedEvent.modifiers))
+    }
 }

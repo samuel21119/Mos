@@ -12,6 +12,10 @@ class PreferencesButtonsViewController: NSViewController {
 
     // MARK: - Recorder
     private var recorder = KeyRecorder()
+    
+    // MARK: - Custom Shortcut Recording State
+    /// 正在录制自定义快捷键的绑定 ID (nil 表示录制新触发事件)
+    private var recordingCustomShortcutForBindingId: UUID?
 
     // MARK: - Data
     private var buttonBindings: [ButtonBinding] = []
@@ -318,6 +322,43 @@ extension PreferencesButtonsViewController {
     func getButtonBinding(id: UUID) -> ButtonBinding? {
         return buttonBindings.first { $0.id == id }
     }
+    
+    // MARK: - 自定义快捷键录制
+    
+    /// 开始录制自定义快捷键
+    /// - Parameters:
+    ///   - bindingId: 要绑定的记录 ID
+    ///   - sourceView: 触发录制的视图 (用于显示录制 popover)
+    func startCustomShortcutRecording(for bindingId: UUID, from sourceView: NSView) {
+        recordingCustomShortcutForBindingId = bindingId
+        recorder.startRecording(from: sourceView)
+    }
+    
+    /// 更新按钮绑定的自定义快捷键
+    /// - Parameters:
+    ///   - id: 绑定记录的唯一标识
+    ///   - customShortcut: 自定义快捷键事件
+    func updateButtonBindingWithCustomShortcut(id: UUID, customShortcut: RecordedEvent) {
+        guard let index = buttonBindings.firstIndex(where: { $0.id == id }) else { return }
+        
+        let oldBinding = buttonBindings[index]
+        
+        // 创建新绑定,使用自定义快捷键替代系统快捷键
+        let updatedBinding = ButtonBinding(
+            id: oldBinding.id,
+            triggerEvent: oldBinding.triggerEvent,
+            systemShortcutName: "",  // 清空系统快捷键名称
+            customShortcut: customShortcut,  // 设置自定义快捷键
+            isEnabled: true,
+            isDefaultEnabled: oldBinding.isDefaultEnabled,
+            disabledApplications: oldBinding.disabledApplications,
+            enabledApplications: oldBinding.enabledApplications
+        )
+        
+        buttonBindings[index] = updatedBinding
+        tableView.reloadData()
+        syncViewWithOptions()
+    }
 }
 
 /**
@@ -349,6 +390,9 @@ extension PreferencesButtonsViewController: NSTableViewDelegate, NSTableViewData
                 with: binding,
                 onShortcutSelected: { [weak self] shortcut in
                     self?.updateButtonBinding(id: binding.id, with: shortcut)
+                },
+                onCustomShortcutRequested: { [weak self] in
+                    self?.startCustomShortcutRecording(for: binding.id, from: cell)
                 },
                 onDeleteRequested: { [weak self] in
                     self?.removeButtonBinding(id: binding.id)
@@ -428,8 +472,19 @@ extension PreferencesButtonsViewController: KeyRecorderDelegate {
     func onEventRecorded(_ recorder: KeyRecorder, didRecordEvent event: CGEvent, isDuplicate: Bool) {
         // 添加延迟后调用, 确保不要太早消失
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.66) { [weak self] in
-            // isDuplicate 参数现在忽略,因为我们允许重复
-            self?.addRecordedEvent(event, isDuplicate: false)
+            guard let self = self else { return }
+            
+            // 检查是否正在录制自定义快捷键
+            if let bindingId = self.recordingCustomShortcutForBindingId {
+                // 录制自定义快捷键
+                let customShortcut = RecordedEvent(from: event)
+                self.updateButtonBindingWithCustomShortcut(id: bindingId, customShortcut: customShortcut)
+                self.recordingCustomShortcutForBindingId = nil
+            } else {
+                // 录制新的触发事件
+                // isDuplicate 参数现在忽略,因为我们允许重复
+                self.addRecordedEvent(event, isDuplicate: false)
+            }
         }
     }
 }

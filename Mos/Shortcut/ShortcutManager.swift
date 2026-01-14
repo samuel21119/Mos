@@ -28,6 +28,10 @@ class ShortcutManager {
         return NSImage(systemSymbolName: symbolName, accessibilityDescription: nil)
     }
 
+    // MARK: - 特殊标识符
+    /// 用于标识"录制自定义快捷键"菜单项的特殊字符串
+    static let recordCustomShortcutIdentifier = "__RECORD_CUSTOM_SHORTCUT__"
+    
     // MARK: - 菜单构建
     /// 构建分级快捷键菜单 (按分类组织系统快捷键)
     ///
@@ -35,8 +39,9 @@ class ShortcutManager {
     /// - 索引0: 占位符 PopUpButton 显示此项,动态更新标题和图标
     /// - 索引1: 分割线 #1 - 根据绑定状态动态隐藏/显示
     /// - 索引2: "未绑定"/"取消绑定" - 可选菜单项,representedObject 为 nil
-    /// - 索引3: 分割线 #2 - 分隔操作区和分类菜单
-    /// - 索引4+: 分类子菜单 (功能键,应用与窗口等)
+    /// - 索引3: "录制自定义快捷键" - 触发自定义快捷键录制
+    /// - 索引4: 分割线 #2 - 分隔操作区和分类菜单
+    /// - 索引5+: 分类子菜单 (功能键,应用与窗口等)
     ///
     /// - Parameter menu: 目标菜单对象
     /// - Parameter target: 菜单项点击事件的目标对象
@@ -59,6 +64,18 @@ class ShortcutManager {
         unboundItem.target = target
         unboundItem.representedObject = nil  // nil 表示清除绑定
         menu.addItem(unboundItem)
+        
+        // 添加"录制自定义快捷键"选项
+        let recordCustomItem = NSMenuItem(title: NSLocalizedString("button.record.custom", comment: ""), action: action, keyEquivalent: "")
+        recordCustomItem.target = target
+        recordCustomItem.representedObject = recordCustomShortcutIdentifier  // 特殊标识符
+        // 为录制选项添加图标 (macOS 11.0+)
+        if supportsSFSymbols {
+            if #available(macOS 11.0, *) {
+                recordCustomItem.image = createSymbolImage("record.circle")
+            }
+        }
+        menu.addItem(recordCustomItem)
 
         // 添加第二条分割线 (分隔"未绑定"操作和分类菜单)
         menu.addItem(NSMenuItem.separator())

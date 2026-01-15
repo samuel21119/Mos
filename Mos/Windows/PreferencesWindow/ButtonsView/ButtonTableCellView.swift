@@ -216,8 +216,8 @@ class ButtonTableCellView: NSTableCellView, NSMenuDelegate {
     // 列位置常量 (与 PreferencesButtonsViewController 中的值保持一致)
     // 从 cell 的右边缘计算各列中心位置
     private static let appColumnCenterFromTrailing: CGFloat = 20
-    private static let defaultColumnCenterFromTrailing: CGFloat = 60
-    private static let actionColumnTrailingFromTrailing: CGFloat = 90  // Action 列右边缘距 cell 右边缘
+    private static let defaultColumnCenterFromTrailing: CGFloat = 70
+    private static let actionColumnTrailingFromTrailing: CGFloat = 100  // Action 列右边缘距 cell 右边缘
     
     /// 设置默认开关和应用设置按钮
     private func setupDefaultToggleAndAppSettings(binding: ButtonBinding) {
@@ -278,14 +278,14 @@ class ButtonTableCellView: NSTableCellView, NSMenuDelegate {
         // 布局约束 - 使用 contentView 的 trailing anchor
         // contentView 是 Box 内的 content view，与 actionPopUpButton 在同一层级
         NSLayoutConstraint.activate([
-            // Apps 按钮: 距 contentView trailing
+            // Apps 按钮: 距 contentView trailing 20pt
             appSettingsButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -10),
             appSettingsButton.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
             appSettingsButton.widthAnchor.constraint(equalToConstant: 20),
             appSettingsButton.heightAnchor.constraint(equalToConstant: 20),
             
             // Default 开关: 在 Apps 按钮左边
-            defaultToggle.trailingAnchor.constraint(equalTo: appSettingsButton.leadingAnchor, constant: -20),
+            defaultToggle.trailingAnchor.constraint(equalTo: appSettingsButton.leadingAnchor, constant: -30),
             defaultToggle.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
         ])
     }

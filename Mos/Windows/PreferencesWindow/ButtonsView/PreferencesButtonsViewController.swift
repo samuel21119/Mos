@@ -39,8 +39,6 @@ class PreferencesButtonsViewController: NSViewController {
         recorder.delegate = self
         tableView.delegate = self
         tableView.dataSource = self
-        // 设置拖拽排序
-        setupDragAndDrop()
         // 添加额外的表头标签
         setupAdditionalHeaderLabels()
         // 添加帮助按钮
@@ -49,20 +47,12 @@ class PreferencesButtonsViewController: NSViewController {
         loadOptionsToView()
     }
     
-    // MARK: - Drag and Drop Setup
-    private static let dragType = NSPasteboard.PasteboardType("com.caldis.Mos.ButtonBinding")
-    
-    private func setupDragAndDrop() {
-        tableView.registerForDraggedTypes([Self.dragType])
-        tableView.draggingDestinationFeedbackStyle = .gap
-    }
-    
     // 列位置常量 (从右边缘计算的中心点位置)
     // 这些值会在 ButtonTableCellView 中使用相同的值以保持对齐
     static let appColumnCenterFromTrailing: CGFloat = 20      // Apps 列中心距右边缘
-    static let defaultColumnCenterFromTrailing: CGFloat = 60  // Default 列中心距右边缘
-    static let actionColumnTrailingFromTrailing: CGFloat = 90  // Action 列右边缘距右边缘
-    static let actionColumnCenterFromTrailing: CGFloat = 180  // Action 列中心距右边缘 (用于标题居中)
+    static let defaultColumnCenterFromTrailing: CGFloat = 70  // Default 列中心距右边缘
+    static let actionColumnTrailingFromTrailing: CGFloat = 100  // Action 列右边缘距右边缘
+    static let actionColumnCenterFromTrailing: CGFloat = 160  // Action 列中心距右边缘 (用于标题居中)
     
     /// 添加额外的表头标签 (Action, Default, Apps)
     /// 使用固定位置以确保与单元格控件对齐
@@ -467,51 +457,6 @@ extension PreferencesButtonsViewController: NSTableViewDelegate, NSTableViewData
         // 去掉第一项（修饰键），只保留实际按键用于匹配
         let keyOnly = components.count > 1 ? Array(components.dropFirst()) : components
         return keyOnly.joined(separator: " ")
-    }
-    
-    // MARK: - Drag and Drop
-    
-    /// 开始拖拽时提供数据
-    func tableView(_ tableView: NSTableView, pasteboardWriterForRow row: Int) -> NSPasteboardWriting? {
-        let item = NSPasteboardItem()
-        item.setString(String(row), forType: Self.dragType)
-        return item
-    }
-    
-    /// 验证拖拽目标位置
-    func tableView(_ tableView: NSTableView, validateDrop info: NSDraggingInfo, proposedRow row: Int, proposedDropOperation dropOperation: NSTableView.DropOperation) -> NSDragOperation {
-        // 只接受行间拖放（不是拖到行上）
-        if dropOperation == .above {
-            return .move
-        }
-        return []
-    }
-    
-    /// 接受拖放并重新排序
-    func tableView(_ tableView: NSTableView, acceptDrop info: NSDraggingInfo, row: Int, dropOperation: NSTableView.DropOperation) -> Bool {
-        guard let item = info.draggingPasteboard.pasteboardItems?.first,
-              let rowString = item.string(forType: Self.dragType),
-              let sourceRow = Int(rowString) else {
-            return false
-        }
-        
-        // 计算目标行（考虑移除源行后的索引变化）
-        var destinationRow = row
-        if sourceRow < row {
-            destinationRow -= 1
-        }
-        
-        // 移动数据
-        let binding = buttonBindings.remove(at: sourceRow)
-        buttonBindings.insert(binding, at: destinationRow)
-        
-        // 更新表格（使用动画）
-        tableView.moveRow(at: sourceRow, to: destinationRow)
-        
-        // 同步到 Options
-        syncViewWithOptions()
-        
-        return true
     }
 }
 

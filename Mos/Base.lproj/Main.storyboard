@@ -249,7 +249,7 @@
                                 </subviews>
                                 <constraints>
                                     <constraint firstItem="c5F-kF-CwS" firstAttribute="centerY" secondItem="2W2-hM-ME3" secondAttribute="centerY" id="4XX-7s-FJL"/>
-                                    <constraint firstItem="c5F-kF-CwS" firstAttribute="leading" secondItem="2W2-hM-ME3" secondAttribute="leading" constant="22" id="8dG-MJ-pMB"/>
+                                    <constraint firstItem="c5F-kF-CwS" firstAttribute="leading" secondItem="2W2-hM-ME3" secondAttribute="leading" constant="31" id="8dG-MJ-pMB"/>
                                     <constraint firstAttribute="height" constant="30" id="I6t-Sp-fUx"/>
                                     <constraint firstAttribute="bottom" secondItem="Wa1-F9-Eyt" secondAttribute="bottom" id="bWd-WO-ava"/>
                                     <constraint firstAttribute="trailing" secondItem="Wa1-F9-Eyt" secondAttribute="trailing" id="eZC-lp-tCf"/>
@@ -304,7 +304,7 @@
                                                                                 <color key="fillColor" red="0.96062562677481145" green="0.96754766589999996" blue="0.93064895263721903" alpha="0.0" colorSpace="custom" customColorSpace="displayP3"/>
                                                                             </box>
                                                                             <popUpButton verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="3eO-mD-7ue">
-                                                                                <rect key="frame" x="286" y="8" width="180" height="24"/>
+                                                                                <rect key="frame" x="286" y="8" width="120" height="24"/>
                                                                                 <popUpButtonCell key="cell" type="push" title="No Action" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" selectedItem="epU-lS-atX" id="DPN-ii-WxE">
                                                                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                                                                     <font key="font" metaFont="message"/>
@@ -316,7 +316,7 @@
                                                                                     </menu>
                                                                                 </popUpButtonCell>
                                                                                 <constraints>
-                                                                                    <constraint firstAttribute="width" constant="180" id="ycn-md-UBm"/>
+                                                                                    <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="120" id="ycn-md-UBm"/>
                                                                                 </constraints>
                                                                             </popUpButton>
                                                                         </subviews>
